@@ -1,5 +1,6 @@
 --- @type any
 local uv = vim.uv or vim.loop
+table.unpack = table.unpack or unpack
 
 local function restore_winviews(winviews)
     for win_id, winview in pairs(winviews) do
@@ -135,11 +136,15 @@ function CmdheightManager:activate(str)
     local echospace = vim.v.echospace
     local columns = vim.o.columns
 
-    local lines = vim.split(str, "\n", { plain = true })
+    local lines = vim.split(str, "\n", {
+        plain = true,
+        trimempty = false,
+    })
     local num_lines = 0
     for _, line in ipairs(lines) do
         local len = vim.fn.strwidth(line)
-        num_lines = num_lines + 1 + math.floor((len - 1) / columns)
+        num_lines = num_lines + 1 + math.floor(
+            math.max(0, len - 1) / columns)
         if len >= columns and len % columns == 0 then
             num_lines = num_lines + 1
         end
@@ -212,12 +217,20 @@ function CmdheightManager:setup(opts)
     })
 
     function _G.print(...)
-        local buffer = {}
-        for i = 1, select("#", ...) do
-            table.insert(buffer, tostring(select(i, ...)))
+        local n = select("#", ...)
+        local args = { ... }
+        if n > 0 then
+            for i = 1, n do
+                args[i] = tostring(args[i])
+            end
+            if vim.endswith(args[n], "\n") then
+                args[n] = string.sub(
+                    args[n], 1, #args[n] - 1)
+            end
         end
-        self:activate(table.concat(buffer, " "))
-        self.print(...)
+        local message = table.concat(args, " ")
+        self:activate(message)
+        self.print(message)
     end
 
     --- @diagnostic disable-next-line
@@ -236,6 +249,13 @@ function CmdheightManager:setup(opts)
             end
         end
         if not error then
+            if #chunks > 0 and #buffer > 0 then
+                if vim.endswith(buffer[#buffer], "\n") then
+                    buffer[#buffer] = string.sub(buffer[#buffer], 0, #buffer[#buffer] - 1)
+                    local chunk = chunks[#chunks]
+                    chunk[1] = string.sub(chunk[1], 0, #chunk[1] - 1)
+                end
+            end
             self:activate(table.concat(buffer, ""))
         end
         self.nvim_echo(chunks, _history, _opts)
