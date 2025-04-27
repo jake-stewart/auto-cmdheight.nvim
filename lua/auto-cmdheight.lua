@@ -116,7 +116,7 @@ function CmdheightManager:deactivate(winviews)
 end
 
 function CmdheightManager:activate(str)
-    if self.in_cmd_line then
+    if self.in_cmd_line or vim.in_fast_event() then
         return
     end
     if self.printed then
