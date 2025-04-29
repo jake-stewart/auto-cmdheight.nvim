@@ -136,6 +136,7 @@ function CmdheightManager:activate(str)
     local echospace = vim.v.echospace
     local columns = vim.o.columns
 
+    str = str:gsub("\t", "12345678")
     local lines = vim.split(str, "\n", {
         plain = true,
         trimempty = false,
