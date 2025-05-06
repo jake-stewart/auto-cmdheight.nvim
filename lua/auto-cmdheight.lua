@@ -54,12 +54,14 @@ function CmdheightManager:restore_settings()
 end
 
 function CmdheightManager:schedule_deactivate()
-    self.scheduled_deactivate = true
-    vim.schedule(function()
-        if self.scheduled_deactivate then
-            self:deactivate()
-        end
-    end)
+    if not self.scheduled_deactivate then
+        self.scheduled_deactivate = true
+        vim.schedule(function()
+            if self.scheduled_deactivate then
+                self:deactivate()
+            end
+        end)
+    end
 end
 
 function CmdheightManager:subscribe_key()
@@ -111,6 +113,7 @@ function CmdheightManager:deactivate(winviews)
         self:restore_settings()
         self:unsubscribe_key()
         self:unsubscribe_timer()
+        vim.o.cmdheight = self.cmdheight
         restore_winviews(winviews)
         vim.cmd.redraw()
     end
@@ -212,7 +215,9 @@ function CmdheightManager:setup(opts)
         group = "auto-cmdheight",
         callback = function()
             self.printed = false
-            if vim.fn.state("s") == "s" then
+            if not self.scheduled_deactivate
+                and vim.fn.state("s") == "s"
+            then
                 self:schedule_deactivate()
             end
         end
