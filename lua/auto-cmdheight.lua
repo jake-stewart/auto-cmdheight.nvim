@@ -108,7 +108,7 @@ function CmdheightManager:deactivate(winviews)
         end
 
         if self.opts.clear_always then
-            vim.api.nvim_echo({}, false, {})
+            self.nvim_echo({}, false, {})
         end
         self:restore_settings()
         self:unsubscribe_key()
@@ -178,6 +178,7 @@ function CmdheightManager:activate(str)
     end
     vim.o.cmdheight = math.max(num_lines, self.cmdheight)
     restore_winviews(winviews)
+    vim.cmd.redraw()
 end
 
 --- @param opts AutoCmdheightOpts
